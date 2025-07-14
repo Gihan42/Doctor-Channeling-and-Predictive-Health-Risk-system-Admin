@@ -27,7 +27,7 @@ const Header: React.FC<HeaderProps> = ({
             <MenuIcon className="h-6 w-6" />
           </button>
           <h1 className={`text-xl font-semibold text-gray-800 ml-2 md:ml-0 transition-all duration-300 ${isCollapsed ? 'md:ml-2' : 'md:ml-0'}`}>
-            MediCare Admin
+            Admin
           </h1>
         </div>
         <div className="flex items-center space-x-4">

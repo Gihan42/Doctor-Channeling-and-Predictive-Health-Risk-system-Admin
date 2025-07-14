@@ -1,72 +1,124 @@
 import React, { useEffect, useState, createContext, useContext } from 'react';
+
 type User = {
   id: string;
+  userId: string;
   name: string;
+  userName: string;
   email: string;
   role: string;
+  jwt: string;
 };
+
 type AuthContextType = {
   user: User | null;
   isAuthenticated: boolean;
   loading: boolean;
-  login: (username: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => void;
 };
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-export const AuthProvider: React.FC<{
-  children: React.ReactNode;
-}> = ({
-  children
-}) => {
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
   // Check if user is already logged in
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    const jwt = localStorage.getItem('jwt');
+    const userName = localStorage.getItem('userName');
+    const email = localStorage.getItem('email');
+    const id = localStorage.getItem('id');
+    const role = localStorage.getItem('role');
+    const userId = localStorage.getItem('userId');
+
+    if (jwt && userName && email && id && role && userId) {
+      setUser({
+        id,
+        userId,
+        name: userName,
+        userName,
+        email,
+        role,
+        jwt
+      });
     }
     setLoading(false);
   }, []);
-  const login = async (username: string, password: string) => {
+
+  const login = async (email: string, password: string) => {
     setLoading(true);
     try {
-      // This would be an actual API call in a real application
-      // For demo purposes, we're simulating a successful login after a delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      // Validate credentials (replace with actual authentication logic)
-      if (username === 'admin' && password === 'password') {
-        const userData: User = {
-          id: '1',
-          name: 'Admin User',
-          email: username,
-          role: 'admin'
-        };
-        setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
-      } else {
-        throw new Error('Invalid credentials');
+      const response = await fetch('http://localhost:8080/api/v1/user/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
       }
+
+      if (data.role !== 'Admin') {
+        throw new Error('Only admin users are allowed to access this system');
+      }
+
+      // Save user data to localStorage
+      localStorage.setItem('jwt', data.jwt);
+      localStorage.setItem('userName', data.userName);
+      localStorage.setItem('email', data.email);
+      localStorage.setItem('id', data.id.toString());
+      localStorage.setItem('role', data.role);
+      localStorage.setItem('userId', data.userId);
+
+      // Set user in state
+      setUser({
+        id: data.id.toString(),
+        userId: data.userId,
+        name: data.userName,
+        userName: data.userName,
+        email: data.email,
+        role: data.role,
+        jwt: data.jwt
+      });
+
     } catch (error) {
       throw error;
     } finally {
       setLoading(false);
     }
   };
+
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('user');
+    localStorage.removeItem('jwt');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('email');
+    localStorage.removeItem('id');
+    localStorage.removeItem('role');
+    localStorage.removeItem('userId');
   };
-  return <AuthContext.Provider value={{
-    user,
-    isAuthenticated: !!user,
-    loading,
-    login,
-    logout
-  }}>
-      {children}
-    </AuthContext.Provider>;
+
+  return (
+      <AuthContext.Provider
+          value={{
+            user,
+            isAuthenticated: !!user,
+            loading,
+            login,
+            logout,
+          }}
+      >
+        {children}
+      </AuthContext.Provider>
+  );
 };
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
