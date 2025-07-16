@@ -4,33 +4,35 @@ import { useNavigate } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import { toast } from 'sonner';
 import { useAuth } from '../../contexts/AuthContext';
+import axios from 'axios';
+
 const PasswordChange: React.FC = () => {
   const navigate = useNavigate();
-  const {
-    user
-  } = useAuth();
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
+
   // Password visibility state
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   // Form validation state
-  const [errors, setErrors] = useState<{
-    [key: string]: string;
-  }>({});
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
   // Loading state
   const [isLoading, setIsLoading] = useState(false);
+
   const validateForm = () => {
-    const newErrors: {
-      [key: string]: string;
-    } = {};
+    const newErrors: { [key: string]: string } = {};
+
     if (!formData.currentPassword) {
       newErrors.currentPassword = 'Current password is required';
     }
+
     if (!formData.newPassword) {
       newErrors.newPassword = 'New password is required';
     } else if (formData.newPassword.length < 6) {
@@ -38,23 +40,24 @@ const PasswordChange: React.FC = () => {
     } else if (formData.newPassword === formData.currentPassword) {
       newErrors.newPassword = 'New password must be different from current password';
     }
+
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = 'Please confirm your new password';
     } else if (formData.newPassword !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const {
-      name,
-      value
-    } = e.target;
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+
     // Clear error when field is edited
     if (errors[name]) {
       setErrors(prev => ({
@@ -63,106 +66,190 @@ const PasswordChange: React.FC = () => {
       }));
     }
   };
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!validateForm()) {
       toast.error('Please fix the errors in the form');
       return;
     }
+
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      // For demo, we'll just check if the current password is "password"
-      if (formData.currentPassword !== 'password') {
-        setErrors({
-          currentPassword: 'Current password is incorrect'
-        });
-        setIsLoading(false);
-        return;
+
+    try {
+      const userId = localStorage.getItem('id');
+      if (!userId) {
+        throw new Error('User ID not found in local storage');
       }
-      toast.success('Password changed successfully');
+
+      const token = localStorage.getItem('jwt');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const config = {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      };
+
+      const requestData = {
+        userId: parseInt(userId, 10),
+        currentPassword: formData.currentPassword,
+        newPassword: formData.newPassword
+      };
+
+      const response = await axios.put(
+          'http://localhost:8080/api/v1/admin/updatePw',
+          requestData,
+          config
+      );
+
+      if (response.data.code === 200) {
+        toast.success('Password changed successfully');
+        navigate('/dashboard');
+      } else {
+        toast.error(response.data.message || 'Failed to change password');
+      }
+    } catch (error: any) {
+      console.error('Error changing password:', error);
+
+      if (error.response && error.response.data && error.response.data.message) {
+        // Handle specific error messages from backend
+        if (error.response.data.message.toLowerCase().includes('current password')) {
+          setErrors({
+            currentPassword: error.response.data.message
+          });
+        } else {
+          toast.error(error.response.data.message);
+        }
+      } else {
+        toast.error('An error occurred while changing the password');
+      }
+    } finally {
       setIsLoading(false);
-      navigate('/dashboard');
-    }, 1000);
+    }
   };
-  return <div className="space-y-6">
-      <div className="flex items-center">
-        <Button variant="outline" size="sm" icon={<ArrowLeftIcon className="h-4 w-4" />} onClick={() => navigate('/dashboard')}>
-          Back to Dashboard
-        </Button>
-        <h1 className="text-2xl font-semibold text-gray-800 ml-4">
-          Change Password
-        </h1>
-      </div>
-      <div className="max-w-md mx-auto bg-white shadow rounded-lg overflow-hidden">
-        <div className="px-6 py-4 border-b">
-          <h2 className="text-lg font-medium text-gray-900">
-            Update Your Password
-          </h2>
-          <p className="mt-1 text-sm text-gray-500">
-            Enter your current password and a new password below
-          </p>
+
+  return (
+      <div className="space-y-6">
+        <div className="flex items-center">
+          <Button variant="outline" size="sm" icon={<ArrowLeftIcon className="h-4 w-4" />} onClick={() => navigate('/dashboard')}>
+            Back to Dashboard
+          </Button>
+          <h1 className="text-2xl font-semibold text-gray-800 ml-4">
+            Change Password
+          </h1>
         </div>
-        <form onSubmit={handleSubmit} className="px-6 py-4 space-y-6">
-          {/* Current Password */}
-          <div>
-            <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700">
-              Current Password
-            </label>
-            <div className="relative mt-1">
-              <input type={showCurrentPassword ? 'text' : 'password'} id="currentPassword" name="currentPassword" value={formData.currentPassword} onChange={handleChange} className={`block w-full rounded-md shadow-sm sm:text-sm pr-10
-                  ${errors.currentPassword ? 'border-red-300 text-red-900 placeholder-red-300 focus:outline-none focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'}
-                `} />
-              <button type="button" className="absolute inset-y-0 right-0 pr-3 flex items-center" onClick={() => setShowCurrentPassword(!showCurrentPassword)}>
-                {showCurrentPassword ? <EyeOffIcon className="h-5 w-5 text-gray-400" /> : <EyeIcon className="h-5 w-5 text-gray-400" />}
-              </button>
-            </div>
-            {errors.currentPassword && <p className="mt-1 text-sm text-red-600">
-                {errors.currentPassword}
-              </p>}
-          </div>
-          {/* New Password */}
-          <div>
-            <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
-              New Password
-            </label>
-            <div className="relative mt-1">
-              <input type={showNewPassword ? 'text' : 'password'} id="newPassword" name="newPassword" value={formData.newPassword} onChange={handleChange} className={`block w-full rounded-md shadow-sm sm:text-sm pr-10
-                  ${errors.newPassword ? 'border-red-300 text-red-900 placeholder-red-300 focus:outline-none focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'}
-                `} />
-              <button type="button" className="absolute inset-y-0 right-0 pr-3 flex items-center" onClick={() => setShowNewPassword(!showNewPassword)}>
-                {showNewPassword ? <EyeOffIcon className="h-5 w-5 text-gray-400" /> : <EyeIcon className="h-5 w-5 text-gray-400" />}
-              </button>
-            </div>
-            {errors.newPassword && <p className="mt-1 text-sm text-red-600">{errors.newPassword}</p>}
-            <p className="mt-2 text-xs text-gray-500">
-              Password must be at least 6 characters long
+        <div className="max-w-md mx-auto bg-white shadow rounded-lg overflow-hidden">
+          <div className="px-6 py-4 border-b">
+            <h2 className="text-lg font-medium text-gray-900">
+              Update Your Password
+            </h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Enter your current password and a new password below
             </p>
           </div>
-          {/* Confirm New Password */}
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-              Confirm New Password
-            </label>
-            <div className="relative mt-1">
-              <input type={showConfirmPassword ? 'text' : 'password'} id="confirmPassword" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} className={`block w-full rounded-md shadow-sm sm:text-sm pr-10
-                  ${errors.confirmPassword ? 'border-red-300 text-red-900 placeholder-red-300 focus:outline-none focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'}
-                `} />
-              <button type="button" className="absolute inset-y-0 right-0 pr-3 flex items-center" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
-                {showConfirmPassword ? <EyeOffIcon className="h-5 w-5 text-gray-400" /> : <EyeIcon className="h-5 w-5 text-gray-400" />}
-              </button>
+          <form onSubmit={handleSubmit} className="px-6 py-4 space-y-6">
+            {/* Current Password */}
+            <div>
+              <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700">
+                Current Password
+              </label>
+              <div className="relative mt-1">
+                <input
+                    type={showCurrentPassword ? 'text' : 'password'}
+                    id="currentPassword"
+                    name="currentPassword"
+                    value={formData.currentPassword}
+                    onChange={handleChange}
+                    className={`block w-full rounded-md shadow-sm sm:text-sm pr-10
+                  ${errors.currentPassword ? 'border-red-300 text-red-900 placeholder-red-300 focus:outline-none focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'}
+                `}
+                />
+                <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                >
+                  {showCurrentPassword ? <EyeOffIcon className="h-5 w-5 text-gray-400" /> : <EyeIcon className="h-5 w-5 text-gray-400" />}
+                </button>
+              </div>
+              {errors.currentPassword && <p className="mt-1 text-sm text-red-600">
+                {errors.currentPassword}
+              </p>}
             </div>
-            {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">
+
+            {/* New Password */}
+            <div>
+              <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
+                New Password
+              </label>
+              <div className="relative mt-1">
+                <input
+                    type={showNewPassword ? 'text' : 'password'}
+                    id="newPassword"
+                    name="newPassword"
+                    value={formData.newPassword}
+                    onChange={handleChange}
+                    className={`block w-full rounded-md shadow-sm sm:text-sm pr-10
+                  ${errors.newPassword ? 'border-red-300 text-red-900 placeholder-red-300 focus:outline-none focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'}
+                `}
+                />
+                <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                >
+                  {showNewPassword ? <EyeOffIcon className="h-5 w-5 text-gray-400" /> : <EyeIcon className="h-5 w-5 text-gray-400" />}
+                </button>
+              </div>
+              {errors.newPassword && <p className="mt-1 text-sm text-red-600">{errors.newPassword}</p>}
+              <p className="mt-2 text-xs text-gray-500">
+                Password must be at least 6 characters long
+              </p>
+            </div>
+
+            {/* Confirm New Password */}
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                Confirm New Password
+              </label>
+              <div className="relative mt-1">
+                <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    className={`block w-full rounded-md shadow-sm sm:text-sm pr-10
+                  ${errors.confirmPassword ? 'border-red-300 text-red-900 placeholder-red-300 focus:outline-none focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'}
+                `}
+                />
+                <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? <EyeOffIcon className="h-5 w-5 text-gray-400" /> : <EyeIcon className="h-5 w-5 text-gray-400" />}
+                </button>
+              </div>
+              {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">
                 {errors.confirmPassword}
               </p>}
-          </div>
-          <div className="flex justify-end pt-4 border-t">
-            <Button type="submit" variant="primary" icon={<SaveIcon className="h-5 w-5" />} isLoading={isLoading}>
-              Change Password
-            </Button>
-          </div>
-        </form>
+            </div>
+
+            <div className="flex justify-end pt-4 border-t">
+              <Button type="submit" variant="primary" icon={<SaveIcon className="h-5 w-5" />} isLoading={isLoading}>
+                Change Password
+              </Button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>;
+  );
 };
+
 export default PasswordChange;
