@@ -90,28 +90,68 @@ const MedicalCenterForm: React.FC = () => {
   const statusOptions = ['Active', 'Inactive', 'Under Maintenance'];
 
   // Fetch medical center data if in edit mode
+  // In MedicalCenterForm.tsx, update the fetchMedicalCenter function:
   useEffect(() => {
-    if (isEditMode) {
+    if (isEditMode && id) {
       const fetchMedicalCenter = async () => {
         setIsLoading(true);
         try {
-          const response = await axios.get(`http://localhost:8080/api/v1/medical/center/${id}`);
-          const data = response.data;
+          const token = localStorage.getItem('jwt');
+          if (!token) {
+            throw new Error('No authentication token found');
+          }
 
-          const openDate = data.openTime ? new Date(data.openTime) : new Date();
-          const closeDate = data.closeTime ? new Date(data.closeTime) : new Date();
+          const config = {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          };
 
-          setFormData(prev => ({
-            ...prev,
-            // ... other fields
-            selectedDate: openDate.toISOString().split('T')[0],
-            selectedOpenTime: `${String(openDate.getHours()).padStart(2, '0')}:${String(openDate.getMinutes()).padStart(2, '0')}`,
-            selectedCloseTime: `${String(closeDate.getHours()).padStart(2, '0')}:${String(closeDate.getMinutes()).padStart(2, '0')}`,
-            openTime: data.openTime || `${openDate.toISOString().split('T')[0]}T09:00:00`,
-            closeTime: data.closeTime || `${closeDate.toISOString().split('T')[0]}T17:00:00`
-          }));
+          const response = await axios.get(
+              `http://localhost:8080/api/v1/medical/center/getById?id=${id}`,
+              config
+          );
+
+          const data = response.data.data;
+
+          // Parse channelingRooms from JSON string if needed
+          let rooms: ChannelingRoom[] = [];
+          if (data.channelingRoomsJson) {
+            try {
+              rooms = JSON.parse(data.channelingRoomsJson);
+            } catch (e) {
+              console.error('Error parsing channeling rooms:', e);
+            }
+          } else if (data.channelingRooms) {
+            rooms = data.channelingRooms;
+          }
+
+          // Extract just the time portion (HH:mm) from the time strings
+          const openTime = data.openTime ? data.openTime.substring(0, 5) : '09:00';
+          const closeTime = data.closeTime ? data.closeTime.substring(0, 5) : '17:00';
+
+          setFormData({
+            id: data.id,
+            centerName: data.centerName,
+            registrationNumber: data.registrationNumber,
+            contact1: data.contact1,
+            contact2: data.contact2 || '',
+            email: data.email,
+            address: data.address,
+            distric: data.distric,
+            openTime: openTime,
+            closeTime: closeTime,
+            channelingFee: data.channelingFee || 0,
+            centerTypeId: data.centerTypeId || 1,
+            status: data.status || 'Active',
+            channelingRooms: rooms,
+            medicalCenterType: data.medicalCenterType || 'General'
+          });
         } catch (error) {
-          // ... error handling
+          console.error('Error fetching medical center:', error);
+          toast.error('Failed to load medical center data');
+          navigate('/medical-centers');
         } finally {
           setIsLoading(false);
         }
@@ -119,7 +159,7 @@ const MedicalCenterForm: React.FC = () => {
 
       fetchMedicalCenter();
     }
-  }, [id, isEditMode]);
+  }, [id, isEditMode, navigate]);
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
