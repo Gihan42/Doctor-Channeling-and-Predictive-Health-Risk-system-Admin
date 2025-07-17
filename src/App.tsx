@@ -19,6 +19,7 @@ import AdminList from './pages/admins/AdminList';
 import AdminForm from './pages/admins/AdminForm';
 import EmailSystem from './pages/email/EmailSystem';
 import PasswordChange from './pages/profile/PasswordChange';
+import JwtRedirect   from "./contexts/JwtRedirect.tsx";
 export function App() {
   return <AuthProvider>
       <Router>
@@ -27,6 +28,7 @@ export function App() {
           <Route path="/" element={<ProtectedRoute>
                 <AdminLayout />
               </ProtectedRoute>}>
+            <Route path={"/"} element={<JwtRedirect />} />
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="doctors">
