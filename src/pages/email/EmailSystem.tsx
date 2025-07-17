@@ -223,7 +223,7 @@ const EmailSystem: React.FC = () => {
     setIsSending(false);
 
     if (failedCount === 0) {
-      toast.success(`Successfully sent ${successCount} email${successCount > 1 ? 's' : ''}`);
+      toast.success(`Successfully sent`);
     } else if (successCount === 0) {
       toast.error(`Failed to send all ${failedCount} emails`);
     } else {
