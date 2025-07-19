@@ -124,6 +124,11 @@ const Dashboard: React.FC = () => {
       }));
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
+      if(error == 'Request failed with status code 403') {
+        localStorage.removeItem('jwt');
+        window.location.href = '/login';
+        return;
+      }
       setStats(prev => ({
         ...prev,
         error: error.message,
@@ -172,9 +177,10 @@ const Dashboard: React.FC = () => {
   }
 
   if (stats.error) {
-    return <div className="flex justify-center items-center h-64 text-red-500">
-      <p>Error loading dashboard: {stats.error}</p>
-    </div>;
+    if(stats.error === 'Request failed with status code 403') {
+      localStorage.removeItem('jwt');
+      window.location.href = '/login';
+    }
   }
 
   return <div className="space-y-6">
@@ -273,15 +279,21 @@ const Dashboard: React.FC = () => {
         Quick Actions
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <button className="flex items-center justify-center p-4 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100">
+        <button className="flex items-center justify-center p-4 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100"
+        onClick={() => window.location.href = '/doctors/new'}
+        >
           <UsersIcon className="h-5 w-5 mr-2" />
           Add New Doctor
         </button>
-        <button className="flex items-center justify-center p-4 bg-green-50 text-green-700 rounded-lg hover:bg-green-100">
+        <button className="flex items-center justify-center p-4 bg-green-50 text-green-700 rounded-lg hover:bg-green-100"
+        onClick={() => window.location.href = '/medical-centers/new'}
+        >
           <HospitalIcon className="h-5 w-5 mr-2" />
           Add Medical Center
         </button>
-        <button className="flex items-center justify-center p-4 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100">
+        <button className="flex items-center justify-center p-4 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100"
+        onClick={() => window.location.href = '/scheduling'}
+        >
           <CalendarIcon className="h-5 w-5 mr-2" />
           Create Schedule
         </button>
