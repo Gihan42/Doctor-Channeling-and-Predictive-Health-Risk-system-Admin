@@ -42,7 +42,8 @@ const genders = ['Male', 'Female', 'Other'];
 // Mock data for status
 const statusOptions = ['Active', 'Inactive', 'On leave'];
 
-const API_BASE_URL = 'http://localhost:8080/api/v1/doctor';
+
+const baseUrl = import.meta.env.VITE_BASE_URL;
 
 const DoctorForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -84,7 +85,7 @@ const DoctorForm: React.FC = () => {
       if (isEditMode && id) {
         setIsLoading(true);
         try {
-          const response = await fetch(`${API_BASE_URL}/${id}`);
+          const response = await fetch(`${baseUrl}doctor/${id}`);
           if (!response.ok) {
             throw new Error('Failed to fetch doctor data');
           }
@@ -158,6 +159,9 @@ const DoctorForm: React.FC = () => {
     if (formData.doctorFee < 0) {
       newErrors.doctorFee = 'Fee cannot be negative';
     }
+    if (formData.patientCount < 0) {
+      newErrors.patientCount = 'Patient count cannot be negative';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -206,8 +210,8 @@ const DoctorForm: React.FC = () => {
       };
 
       const url = isEditMode
-          ? `${API_BASE_URL}/update/${formData.id}`
-          : `${API_BASE_URL}/save`;
+          ? `${baseUrl}doctor/update/${formData.id}`
+          : `${baseUrl}doctor/save`;
 
       const method = isEditMode ? 'PUT' : 'POST';
 
@@ -562,6 +566,26 @@ const DoctorForm: React.FC = () => {
                       />
                     </div>
                     {errors.doctorFee && <p className="mt-1 text-sm text-red-600">{errors.doctorFee}</p>}
+                  </div>
+
+                  {/* Patient Count */}
+                  <div>
+                    <label htmlFor="patientCount" className="block text-sm font-medium text-gray-700">
+                      Patient Count
+                    </label>
+                    <input
+                        type="number"
+                        id="patientCount"
+                        name="patientCount"
+                        min="0"
+                        value={formData.patientCount}
+                        onChange={handleChange}
+                        className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm ${
+                            errors.patientCount ? 'border-red-300 text-red-900 placeholder-red-300 focus:outline-none focus:ring-red-500 focus:border-red-500'
+                                : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                        }`}
+                    />
+                    {errors.patientCount && <p className="mt-1 text-sm text-red-600">{errors.patientCount}</p>}
                   </div>
 
                   {/* Status */}

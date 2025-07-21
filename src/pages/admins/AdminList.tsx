@@ -18,6 +18,7 @@ interface Admin {
 }
 
 const AdminList: React.FC = () => {
+  const baseUrl = import.meta.env.VITE_BASE_URL;
   const navigate = useNavigate();
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [adminToDelete, setAdminToDelete] = useState<Admin | null>(null);
@@ -44,7 +45,7 @@ const AdminList: React.FC = () => {
           }
         };
 
-        const response = await axios.get('http://localhost:8080/api/v1/admin/getAll', config);
+        const response = await axios.get(`${baseUrl}admin/getAll`, config);
 
         if (response.data.code === 200) {
           const mappedAdmins = response.data.data.map((admin: any) => ({
@@ -134,7 +135,7 @@ const AdminList: React.FC = () => {
       };
 
       const response = await axios.delete(
-          `http://localhost:8080/api/v1/admin?id=${adminToDelete.id}`,
+          `${baseUrl}admin?id=${adminToDelete.id}`,
           config
       );
 

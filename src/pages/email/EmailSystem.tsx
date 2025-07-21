@@ -43,11 +43,12 @@ const mockTemplates: EmailTemplate[] = [{
   body: 'Dear [Doctor Name],\n\nThis is a reminder that our facility will be closed on [Date] for the upcoming holiday. Please ensure your patients are informed of this closure.\n\nRegular hours will resume on [Next Working Date].\n\nBest regards,\nAdmin Team'
 }];
 
-const serviceId = 'service_2se5ola';
-const templateId = 'template_lvvnmbk';
-const publicKey = 'yANI-VFKL_zC4IL0f';
+const serviceId = import.meta.env.VITE_SERVICE_ID;
+const templateId = import.meta.env.VITE_TEMPLATE_ID;
+const publicKey = import.meta.env.VITE_PUBLIC_KEY;
 
 const EmailSystem: React.FC = () => {
+  const baseUrl = import.meta.env.VITE_BASE_URL;
   const [selectedDoctors, setSelectedDoctors] = useState<string[]>([]);
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
@@ -82,7 +83,7 @@ const EmailSystem: React.FC = () => {
           throw new Error('No authentication token found');
         }
 
-        const response = await fetch('http://localhost:8080/api/v1/doctor/getDoctors', {
+        const response = await fetch(`${baseUrl}doctor/getDoctors`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -223,7 +224,7 @@ const EmailSystem: React.FC = () => {
     setIsSending(false);
 
     if (failedCount === 0) {
-      toast.success(`Successfully sentnj`);
+      toast.success(`Successfully sent`);
     } else if (successCount === 0) {
       toast.error(`Failed to send all ${failedCount} emails`);
     } else {

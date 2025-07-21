@@ -25,9 +25,11 @@ interface Doctor {
   roleId: number;
   email: string;
   doctorFee: number;
+  patientCount?: number;
 }
 
 const DoctorList: React.FC = () => {
+  const baseUrl = import.meta.env.VITE_BASE_URL;
   const navigate = useNavigate();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -41,14 +43,38 @@ const DoctorList: React.FC = () => {
     const fetchDoctors = async () => {
       try {
         const token = localStorage.getItem('jwt');
-        const response = await axios.get('http://localhost:8080/api/v1/doctor/getDoctors', {
+        const response = await axios.get(`${baseUrl}doctor/getDoctors`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           }
         });
 
         if (response.data.code === 200) {
-          setDoctors(response.data.data);
+          const doctorsWithPatientCounts = await Promise.all(
+              response.data.data.map(async (doctor: Doctor) => {
+                try {
+                  const patientCountResponse = await axios.get(
+                      `${baseUrl}doctor/getPatientCount?doctorId=${doctor.id}`,
+                      {
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                        }
+                      }
+                  );
+                  return {
+                    ...doctor,
+                    patientCount: patientCountResponse.data.data || 0
+                  };
+                } catch (err) {
+                  console.error(`Error fetching patient count for doctor ${doctor.id}:`, err);
+                  return {
+                    ...doctor,
+                    patientCount: 0
+                  };
+                }
+              })
+          );
+          setDoctors(doctorsWithPatientCounts);
         } else {
           setError('Failed to fetch doctors');
         }
@@ -63,25 +89,31 @@ const DoctorList: React.FC = () => {
     fetchDoctors();
   }, []);
 
-  const columns = [{
-    header: 'Name',
-    accessor: 'fullName',
-    sortable: true
-  }, {
-    header: 'Specialization',
-    accessor: 'specialization',
-    sortable: true
-  }, {
-    header: 'Qualification',
-    accessor: 'qualificationName'
-  }, {
-    header: 'Contact',
-    accessor: 'contact'
-  }, {
-    header: 'Hospital',
-    accessor: 'hospitalAffiliation',
-    sortable: true
-  }];
+  const columns = [
+    {
+      header: 'Name',
+      accessor: 'fullName',
+      sortable: true
+    },
+    {
+      header: 'Specialization',
+      accessor: 'specialization',
+      sortable: true
+    },
+    {
+      header: 'Qualification',
+      accessor: 'qualificationName'
+    },
+    {
+      header: 'Contact',
+      accessor: 'contact'
+    },
+    {
+      header: 'Hospital',
+      accessor: 'hospitalAffiliation',
+      sortable: true
+    },
+  ];
 
   const handleDelete = (doctor: Doctor) => {
     setDoctorToDelete(doctor);
@@ -92,7 +124,7 @@ const DoctorList: React.FC = () => {
 
     try {
       const token = localStorage.getItem('jwt');
-      await axios.delete(`http://localhost:8080/api/v1/doctor/delete?id=${doctorToDelete.id}`, {
+      await axios.delete(`${baseUrl}doctor/delete?id=${doctorToDelete.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         }
@@ -106,7 +138,6 @@ const DoctorList: React.FC = () => {
       setDoctorToDelete(null);
     }
   };
-
 
   const handleView = (doctor: Doctor) => {
     setViewDoctor(doctor);
@@ -134,7 +165,7 @@ const DoctorList: React.FC = () => {
         address2: editDoctor.address2,
         nic: editDoctor.nic,
         email: editDoctor.email,
-        password:"test1234",
+        password: "test1234",
         medicalRegistrationNo: editDoctor.medicalRegistrationNo,
         yearsOfExperience: editDoctor.yearsOfExperience,
         hospitalAffiliation: editDoctor.hospitalAffiliation,
@@ -142,10 +173,11 @@ const DoctorList: React.FC = () => {
         specialization: editDoctor.specialization,
         status: editDoctor.status,
         doctorFee: editDoctor.doctorFee,
-        roleId: editDoctor.roleId
+        roleId: editDoctor.roleId,
+        patientCount: editDoctor.patientCount || 0
       };
 
-      const response = await axios.put('http://localhost:8080/api/v1/doctor/update', updateData, {
+      const response = await axios.put(`${baseUrl}doctor/update`, updateData, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -153,8 +185,35 @@ const DoctorList: React.FC = () => {
       });
 
       if (response.data.code === 200) {
-        // Update the doctors list with the updated doctor
-        setDoctors(doctors.map(d => d.id === editDoctor.id ? editDoctor : d));
+        // Refresh the doctors list to get updated patient counts
+        const updatedDoctors = await Promise.all(
+            doctors.map(async d => {
+              if (d.id === editDoctor.id) {
+                try {
+                  const patientCountResponse = await axios.get(
+                      `${baseUrl}doctor/getPatientCount?doctorId=${editDoctor.id}`,
+                      {
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                        }
+                      }
+                  );
+                  return {
+                    ...editDoctor,
+                    patientCount: patientCountResponse.data.data || 0
+                  };
+                } catch (err) {
+                  console.error(`Error fetching patient count for doctor ${editDoctor.id}:`, err);
+                  return {
+                    ...editDoctor,
+                    patientCount: d.patientCount || 0
+                  };
+                }
+              }
+              return d;
+            })
+        );
+        setDoctors(updatedDoctors);
         toast.success('Doctor updated successfully');
         setEditDoctor(null);
       } else {
@@ -240,6 +299,11 @@ const DoctorList: React.FC = () => {
             Are you sure you want to delete Dr.{' '}
             {doctorToDelete?.fullName.split(' ')[1]}? This action cannot be undone.
           </p>
+          {doctorToDelete?.patientCount && doctorToDelete.patientCount > 0 && (
+              <p className="mt-2 text-red-500">
+                Warning: This doctor has {doctorToDelete.patientCount} associated patients.
+              </p>
+          )}
         </Modal>
 
         {/* View Doctor Modal */}
@@ -543,6 +607,19 @@ const DoctorList: React.FC = () => {
                           onChange={(e) => handleEditChange('doctorFee', parseFloat(e.target.value))}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Patients
+                      </label>
+                      <input
+                          type="number"
+                          min="0"
+                          value={editDoctor.patientCount || 0}
+                          onChange={(e) => handleEditChange('patientCount', parseInt(e.target.value) || 0)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                   </div>

@@ -40,6 +40,7 @@ interface Schedule {
 const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const ScheduleManagement: React.FC = () => {
+  const baseUrl = import.meta.env.VITE_BASE_URL;
   // State for filters
   const [selectedCenter, setSelectedCenter] = useState<string>('');
   const [selectedDoctor, setSelectedDoctor] = useState<string>('');
@@ -86,7 +87,7 @@ const ScheduleManagement: React.FC = () => {
   // Fetch doctors from API
   const fetchDoctors = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/v1/doctor/getDoctors', {
+      const response = await fetch(`${baseUrl}doctor/getDoctors`, {
         headers: getAuthHeaders()
       });
       const data = await response.json();
@@ -104,7 +105,7 @@ const ScheduleManagement: React.FC = () => {
   // Fetch medical centers from API
   const fetchMedicalCenters = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/v1/medical/center/getAll', {
+      const response = await fetch(`${baseUrl}medical/center/getAll`, {
         headers: getAuthHeaders()
       });
       const data = await response.json();
@@ -122,7 +123,7 @@ const ScheduleManagement: React.FC = () => {
   // Fetch rooms for a medical center
   const fetchRoomsForMedicalCenter = async (centerId: string) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/medical/center/channelingRooms?id=${centerId}`, {
+      const response = await fetch(`${baseUrl}medical/center/channelingRooms?id=${centerId}`, {
         headers: getAuthHeaders()
       });
       const data = await response.json();
@@ -142,7 +143,7 @@ const ScheduleManagement: React.FC = () => {
   // Fetch schedules from API
   const fetchSchedules = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/v1/channeling/room/schedule/all-active-schedules', {
+      const response = await fetch(`${baseUrl}channeling/room/schedule/all-active-schedules`, {
         headers: getAuthHeaders()
       });
       const data = await response.json();
@@ -317,8 +318,8 @@ const ScheduleManagement: React.FC = () => {
       };
 
       const url = formData.id
-          ? 'http://localhost:8080/api/v1/channeling/room/schedule/update'
-          : 'http://localhost:8080/api/v1/channeling/room/schedule/save';
+          ? `${baseUrl}channeling/room/schedule/update`
+          : `${baseUrl}channeling/room/schedule/save`;
 
       const method = formData.id ? 'PUT' : 'POST';
 
@@ -351,7 +352,7 @@ const ScheduleManagement: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/channeling/room/schedule/delete?id=${currentSchedule.scheduleId}`, {
+      const response = await fetch(`${baseUrl}channeling/room/schedule/delete?id=${currentSchedule.scheduleId}`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       });

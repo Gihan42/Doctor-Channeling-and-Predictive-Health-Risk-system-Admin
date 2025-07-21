@@ -7,6 +7,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
 
 const PasswordChange: React.FC = () => {
+  const baseUrl = import.meta.env.VITE_BASE_URL;
   const navigate = useNavigate();
   const { user } = useAuth();
   const [formData, setFormData] = useState({
@@ -102,7 +103,7 @@ const PasswordChange: React.FC = () => {
       };
 
       const response = await axios.put(
-          'http://localhost:8080/api/v1/admin/updatePw',
+          `${baseUrl}admin/updatePw`,
           requestData,
           config
       );

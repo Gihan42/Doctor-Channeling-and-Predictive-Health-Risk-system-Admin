@@ -22,6 +22,7 @@ interface Patient {
 }
 
 const PatientList: React.FC = () => {
+  const baseUrl = import.meta.env.VITE_BASE_URL;
   const [patients, setPatients] = useState<Patient[]>([]);
   const [patientToDelete, setPatientToDelete] = useState<Patient | null>(null);
   const [viewPatient, setViewPatient] = useState<Patient | null>(null);
@@ -37,7 +38,7 @@ const PatientList: React.FC = () => {
         }
 
         const response = await axios.get(
-            'http://localhost:8080/api/v1/patient/getAllActivePatients',
+            `${baseUrl}patient/getAllActivePatients`,
             {
               headers: {
                 'Authorization': `Bearer ${token}`,
@@ -110,7 +111,7 @@ const PatientList: React.FC = () => {
       }
 
       // Call your delete API endpoint here
-      await axios.delete(`http://localhost:8080/api/v1/patient?id=${patientToDelete.id}`, {
+      await axios.delete(`${baseUrl}patient?id=${patientToDelete.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

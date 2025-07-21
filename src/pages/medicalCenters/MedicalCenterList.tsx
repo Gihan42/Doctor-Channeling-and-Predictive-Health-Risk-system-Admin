@@ -23,6 +23,7 @@ interface MedicalCenter {
 }
 
 const MedicalCenterList: React.FC = () => {
+    const baseUrl = import.meta.env.VITE_BASE_URL;
     const navigate = useNavigate();
     const [centers, setCenters] = useState<MedicalCenter[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
@@ -43,7 +44,7 @@ const MedicalCenterList: React.FC = () => {
                         'Content-Type': 'application/json'
                     }
                 };
-                const response = await axios.get('http://localhost:8080/api/v1/medical/center/getAll', config);
+                const response = await axios.get(`${baseUrl}medical/center/getAll`, config);
                 if (response.data.code === 200) {
                     setCenters(response.data.data);
                 } else {
@@ -129,7 +130,7 @@ const MedicalCenterList: React.FC = () => {
                     'Content-Type': 'application/json'
                 }
             };
-            await axios.delete(`http://localhost:8080/api/v1/medical/center?id=${centerToDelete.id}`,config);
+            await axios.delete(`${baseUrl}medical/center?id=${centerToDelete.id}`,config);
             setCenters(centers.filter(c => c.id !== centerToDelete.id));
             toast.success(`${centerToDelete.centerName} has been removed`);
         } catch (err) {

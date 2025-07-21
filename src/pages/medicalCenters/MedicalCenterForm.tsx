@@ -31,6 +31,7 @@ interface MedicalCenterFormData {
 }
 
 const MedicalCenterForm: React.FC = () => {
+  const baseUrl = import.meta.env.VITE_BASE_URL;
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isEditMode = !!id;
@@ -109,7 +110,7 @@ const MedicalCenterForm: React.FC = () => {
           };
 
           const response = await axios.get(
-              `http://localhost:8080/api/v1/medical/center/getById?id=${id}`,
+              `${baseUrl}medical/center/getById?id=${id}`,
               config
           );
 
@@ -333,10 +334,10 @@ const MedicalCenterForm: React.FC = () => {
 
       console.log(payload)
       if (isEditMode) {
-        await axios.put(`http://localhost:8080/api/v1/medical/center/update`, payload, config);
+        await axios.put(`${baseUrl}medical/center/update`, payload, config);
         toast.success(`${formData.centerName} updated successfully`);
       } else {
-        await axios.post(`http://localhost:8080/api/v1/medical/center/save`, payload, config);
+        await axios.post(`${baseUrl}medical/center/save`, payload, config);
         toast.success(`${formData.centerName} registered successfully`);
       }
       navigate('/medical-centers');

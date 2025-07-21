@@ -17,6 +17,7 @@ interface AdminFormData {
 }
 
 const AdminForm: React.FC = () => {
+  const baseUrl = import.meta.env.VITE_BASE_URL;
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isEditMode = !!id;
@@ -58,7 +59,7 @@ const AdminForm: React.FC = () => {
               'Content-Type': 'application/json'
             }
           };
-          const response = await axios.get(`http://localhost:8080/api/v1/admin?id=${id}`,config);
+          const response = await axios.get(`${baseUrl}admin?id=${id}`,config);
           if (response.data.code === 200) {
             const adminData = response.data.data;
             setFormData({
@@ -165,7 +166,7 @@ const AdminForm: React.FC = () => {
       if (isEditMode) {
         // Update existing admin - modified to match your endpoint
         const response = await axios.put(
-            `http://localhost:8080/api/v1/admin/update`,
+            `${baseUrl}admin/update`,
             {
               id: submitData.id,
               uniqId: submitData.uniqId || "",
@@ -187,7 +188,7 @@ const AdminForm: React.FC = () => {
       } else {
         // Create new admin
         const response = await axios.post(
-            'http://localhost:8080/api/v1/admin/save',
+            `${baseUrl}admin/save`,
             submitData,
             config
         );

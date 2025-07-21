@@ -64,7 +64,7 @@ const ActivityLog: React.FC<{
     <div className="text-xs text-gray-500">{time}</div>
   </div>;
 };
-
+const baseUrl = import.meta.env.VITE_BASE_URL;
 const Dashboard: React.FC = () => {
   const [stats, setStats] = useState({
     totalDoctors: 0,
@@ -100,10 +100,10 @@ const Dashboard: React.FC = () => {
       };
 
       const endpoints = [
-        { url: 'http://localhost:8080/api/v1/doctor/count', key: 'totalDoctors' },
-        { url: 'http://localhost:8080/api/v1/medical/center/count', key: 'medicalCenters' },
-        { url: 'http://localhost:8080/api/v1/patient/count', key: 'registeredPatients' },
-        { url: 'http://localhost:8080/api/v1/appointment/count', key: 'scheduledSessions' }
+        { url: `${baseUrl}doctor/count`, key: 'totalDoctors' },
+        { url: `${baseUrl}medical/center/count`, key: 'medicalCenters' },
+        { url: `${baseUrl}patient/count`, key: 'registeredPatients' },
+        { url: `${baseUrl}appointment/count`, key: 'scheduledSessions' }
       ];
 
       const responses = await Promise.all(
@@ -152,7 +152,7 @@ const Dashboard: React.FC = () => {
       };
 
       const response = await axios.get(
-          'http://localhost:8080/api/v1/appointment/todayPendingAppointments',
+          `${baseUrl}appointment/todayPendingAppointments`,
           config
       );
 
