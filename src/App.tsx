@@ -21,6 +21,7 @@ import EmailSystem from './pages/email/EmailSystem';
 import PasswordChange from './pages/profile/PasswordChange';
 import JwtRedirect   from "./contexts/JwtRedirect.tsx";
 import Comments from './pages/comments/CommentManage.tsx';
+import PaymentDashboard from './pages/payments/PaymentDashboard.tsx';
 
 export function App() {
   return <AuthProvider>
@@ -45,6 +46,7 @@ export function App() {
             </Route>
             <Route path="scheduling" element={<ScheduleManagement />} />
             <Route path="patients" element={<PatientList />} />
+            <Route path="payments" element={<PaymentDashboard />} />
             <Route path="admins">
               <Route index element={<AdminList />} />
               <Route path="new" element={<AdminForm />} />

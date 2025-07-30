@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboardIcon, UsersIcon, CalendarIcon,HospitalIcon, UserIcon, ShieldIcon, MailIcon, XIcon, ChevronLeftIcon, ChevronRightIcon,Kanban  } from 'lucide-react';
+import { LayoutDashboardIcon, UsersIcon, CalendarIcon,HospitalIcon,CreditCardIcon, UserIcon, ShieldIcon, MailIcon, XIcon, ChevronLeftIcon, ChevronRightIcon,Kanban  } from 'lucide-react';
 interface SidebarProps {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
@@ -64,6 +64,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <NavItem to="/medical-centers" icon={<HospitalIcon className="w-5 h-5" />} label="Medical Centers" isCollapsed={isCollapsed} onClick={closeSidebar} />
           <NavItem to="/scheduling" icon={<CalendarIcon className="w-5 h-5" />} label="Scheduling" isCollapsed={isCollapsed} onClick={closeSidebar} />
           <NavItem to="/patients" icon={<UserIcon className="w-5 h-5" />} label="Patients" isCollapsed={isCollapsed} onClick={closeSidebar} />
+          <NavItem to="/payments" icon={<CreditCardIcon className="w-5 h-5" />} label="Payments" isCollapsed={isCollapsed} onClick={closeSidebar} />
           <NavItem to="/admins" icon={<ShieldIcon className="w-5 h-5" />} label="Admins" isCollapsed={isCollapsed} onClick={closeSidebar} />
           <NavItem to="/email" icon={<MailIcon className="w-5 h-5" />} label="Email System" isCollapsed={isCollapsed} onClick={closeSidebar} />
           <NavItem to="/comments" icon={<Kanban className="w-5 h-5" />} label="Patients Comments" isCollapsed={isCollapsed} onClick={closeSidebar} />
